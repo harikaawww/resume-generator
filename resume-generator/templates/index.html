@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-ui="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Build a clean, professional PDF resume in minutes.">
+  <title>ResumeGen - PDF Resume Builder</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">R</span>
+      <span class="brand-name">Resume<span>Gen</span></span>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-soft" id="load-sample">Load sample</button>
+      <button type="button" class="icon-btn" id="ui-toggle" aria-label="Switch light or dark mode" title="Light / dark mode">&#9680;</button>
+      <button type="submit" form="resume-form" class="btn-primary small">Download PDF</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Build a resume that gets noticed.</h1>
+    <p>Fill in your details, pick a template, and watch your resume update live. Download it as a polished PDF.</p>
+  </section>
+
+  <main class="layout">
+    <form id="resume-form" action="{{ url_for('download') }}" method="POST">
+
+      <section class="card">
+        <div class="card-head"><span class="step">1</span><h2>Personal details</h2></div>
+        <label>Full name <b class="req">*</b>
+          <input name="name" placeholder="Jane Doe" autocomplete="name" required>
+        </label>
+        <label>Headline
+          <input name="headline" placeholder="Computer Science Student | Python Developer">
+        </label>
+        <label>Summary
+          <textarea name="summary" rows="3" placeholder="2-3 lines about who you are and what you are looking for."></textarea>
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><span class="step">2</span><h2>Contact</h2></div>
+        <div class="row">
+          <label>Email
+            <input name="email" type="email" placeholder="you@example.com" autocomplete="email">
+          </label>
+          <label>Phone
+            <input name="phone" type="tel" placeholder="+91 98765 43210" autocomplete="tel">
+          </label>
+        </div>
+        <label>Location
+          <input name="location" placeholder="City, Country" autocomplete="address-level2">
+        </label>
+        <label>Links <small>comma separated</small>
+          <input name="links" placeholder="https://github.com/you, https://linkedin.com/in/you">
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><span class="step">3</span><h2>Skills &amp; languages</h2></div>
+        <label>Skills <small>comma separated</small>
+          <input name="skills" placeholder="Python, Flask, SQL, Git, HTML/CSS">
+        </label>
+        <label>Languages known <small>comma separated</small>
+          <input name="languages" placeholder="English (Fluent), Hindi (Native), Telugu">
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><span class="step">4</span><h2>Experience</h2></div>
+        <div id="list-experience"></div>
+        <button type="button" class="btn-soft" data-add="experience">+ Add experience</button>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><span class="step">5</span><h2>Projects</h2></div>
+        <div id="list-projects"></div>
+        <button type="button" class="btn-soft" data-add="projects">+ Add project</button>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><span class="step">6</span><h2>Education</h2></div>
+        <div id="list-education"></div>
+        <button type="button" class="btn-soft" data-add="education">+ Add education</button>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><span class="step">7</span><h2>Certificates</h2></div>
+        <div id="list-certificates"></div>
+        <button type="button" class="btn-soft" data-add="certificates">+ Add certificate</button>
+      </section>
+
+      <button type="submit" class="btn-primary wide">Download PDF</button>
+    </form>
+
+    <aside class="preview-col">
+      <div class="card preview-card">
+        <div class="preview-top">
+          <h2>Template</h2>
+          <div class="strength" title="How complete your resume is">
+            <span id="strength-label">0% complete</span>
+            <div class="bar"><div id="strength-fill"></div></div>
+          </div>
+        </div>
+
+        <div class="templates" role="radiogroup" aria-label="Resume template">
+          {% for key, t in themes.items() %}
+          <label class="tpl-card" style="--swatch: {{ t.accent }}">
+            <input type="radio" name="template" value="{{ key }}" form="resume-form" {% if loop.first %}checked{% endif %}>
+            <span class="thumb thumb-{{ t.header }}"><i></i><i></i><i></i><i></i></span>
+            <span class="tpl-name">{{ t.label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+
+        <div id="preview" class="preview" data-theme="classic"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="site-footer">Built with Flask &amp; ReportLab</footer>
+
+  <!-- Blueprints for repeatable entries; JavaScript clones these. -->
+  <template id="tpl-experience">
+    <div class="entry">
+      <button type="button" class="remove" data-remove aria-label="Remove entry">&times;</button>
+      <div class="row">
+        <label>Role <input name="experience_role[]" data-f="role" placeholder="Python Intern"></label>
+        <label>Company <input name="experience_company[]" data-f="company" placeholder="ABC Tech"></label>
+      </div>
+      <label>Dates <input name="experience_dates[]" data-f="dates" placeholder="Jun 2026 - Aug 2026"></label>
+      <label>What you did <small>one point per line</small>
+        <textarea name="experience_details[]" data-f="details" rows="3" placeholder="Built a REST API used by 200+ students"></textarea>
+      </label>
+    </div>
+  </template>
+
+  <template id="tpl-projects">
+    <div class="entry">
+      <button type="button" class="remove" data-remove aria-label="Remove entry">&times;</button>
+      <label>Title <input name="projects_title[]" data-f="title" placeholder="Certificate Verification System"></label>
+      <label>Link <input name="projects_link[]" data-f="link" placeholder="https://github.com/you/project"></label>
+      <label>Description <small>one point per line</small>
+        <textarea name="projects_description[]" data-f="description" rows="3" placeholder="Generates QR-coded certificates and verifies them online"></textarea>
+      </label>
+    </div>
+  </template>
+
+  <template id="tpl-education">
+    <div class="entry">
+      <button type="button" class="remove" data-remove aria-label="Remove entry">&times;</button>
+      <div class="row">
+        <label>Degree <input name="education_degree[]" data-f="degree" placeholder="B.Tech in Computer Science"></label>
+        <label>Year <input name="education_year[]" data-f="year" placeholder="2023 - 2027"></label>
+      </div>
+      <label>College / School <input name="education_school[]" data-f="school" placeholder="Your College Name"></label>
+    </div>
+  </template>
+
+  <template id="tpl-certificates">
+    <div class="entry">
+      <button type="button" class="remove" data-remove aria-label="Remove entry">&times;</button>
+      <label>Certificate name <input name="certificates_name[]" data-f="name" placeholder="Python for Everybody"></label>
+      <div class="row">
+        <label>Issued by <input name="certificates_issuer[]" data-f="issuer" placeholder="Coursera"></label>
+        <label>Year <input name="certificates_year[]" data-f="year" placeholder="2025"></label>
+      </div>
+    </div>
+  </template>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
